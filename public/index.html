@@ -151,15 +151,24 @@ function rank(papers,mat,n){const P=papers.length,gs=[];
  gs.forEach(g=>{const rep=g.p.size/P,rec=(Math.max(...g.p)+1)/P,cov=hm?g.t.reduce((s,w)=>s+Math.log(1+(tf[w]||0)),0)/(g.t.length*Math.log(1+mx)):0;g.s=hm?.5*rep+.3*Math.min(1,cov*1.6)+.2*rec:.7*rep+.3*rec});
  return gs.sort((a,b)=>b.s-a.s).slice(0,n)}
 
-async function shrink(f){const b=await createImageBitmap(f),k=Math.min(1,1600/Math.max(b.width,b.height)),c=document.createElement("canvas");c.width=b.width*k;c.height=b.height*k;c.getContext("2d").drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(r,"image/jpeg",.82))}
-async function ocr(f){if(!S||!SL||!SL.images)throw 0;const r=await S("Transcribe all text in this image exactly. If it is an exam paper, put each question on its own line with its number. Output only the text.",{images:[await shrink(f)],cache:false});return r.text}
+async function shrink(f){
+ let img,w,h;
+ try{img=await createImageBitmap(f);w=img.width;h=img.height}
+ catch(e){img=await new Promise((resolve,reject)=>{const u=URL.createObjectURL(f),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);resolve(i)};i.onerror=()=>{URL.revokeObjectURL(u);reject(new Error("This image format could not be opened. Try JPG or PNG."))};i.src=u});w=img.naturalWidth;h=img.naturalHeight}
+ if(!w||!h)throw new Error("The image has no readable dimensions.");
+ const k=Math.min(1,1100/Math.max(w,h)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(w*k));c.height=Math.max(1,Math.round(h*k));
+ const ctx=c.getContext("2d");if(!ctx)throw new Error("Image processing is not supported by this browser.");ctx.fillStyle="#fff";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);if(img.close)img.close();
+ const blob=await new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("Could not prepare the image. Try a screenshot or JPG file.")),"image/jpeg",.68));
+ if(blob.size>1000000)throw new Error("This image is still too large. Crop it to the question area and try again.");return blob
+}
+async function ocr(f){if(!S||!SL||!SL.images)throw new Error("AI image reading is not enabled.");const blob=await shrink(f);const r=await S("Transcribe all visible text in this image exactly. Preserve question numbers, subparts, equations and mark values. If it is an exam paper, put each question on its own line. If any text is unclear, mark it [unclear] rather than inventing it. Output only the transcription.",{images:[blob]});if(!r||!r.text||!r.text.trim())throw new Error("The AI could not extract readable text from this image. Try a clearer, closer photo.");return r.text}
 async function readPdf(f,paper){const lib=window.pdfjsLib;if(!lib)throw 0;lib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
  const pdf=await lib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise;let L=[];
  for(let i=1;i<=pdf.numPages;i++){const c=await (await pdf.getPage(i)).getTextContent();let y=null,cur="";c.items.forEach(it=>{const yy=Math.round(it.transform[5]);if(y!==null&&Math.abs(yy-y)>3){L.push(cur.trim());cur=""}y=yy;cur+=it.str});if(cur.trim())L.push(cur.trim())}
  L=L.filter(Boolean);if(!L.length)throw 0;if(!paper)return L.join("\n");
  const mk=/^(q\.?\s*)?\(?\d{1,2}[\).:]?\s|^q\s?\d/i;if(L.filter(l=>mk.test(l)).length<3)return L.join("\n");
  const o=[];L.forEach(l=>{if(mk.test(l)||!o.length)o.push(l);else o[o.length-1]+=" "+l});return o.join("\n")}
-async function ingest(files,ta,paper){for(const f of files){$("gst").textContent="Reading "+f.name+"...";try{const img=f.type.startsWith("image/");const t=img?await ocr(f):/\.pdf$/i.test(f.name)?await readPdf(f,paper):await f.text();ta.value+=(ta.value?"\n":"")+t}catch(e){$("gst").textContent="Could not read "+f.name+". "+(f.type.startsWith("image/")?"Photo reading is coming soon in the full version.":"If it is a scanned PDF, take screenshots and use the photo button.");return}}$("gst").textContent="Done. Check the text, then generate."}
+async function ingest(files,ta,paper){for(const f of files){$("gst").textContent="Reading "+f.name+"...";try{const img=f.type.startsWith("image/");const t=img?await ocr(f):/\.pdf$/i.test(f.name)?await readPdf(f,paper):await f.text();ta.value+=(ta.value?"\n":"")+t}catch(e){const why=e&&e.message?e.message:"Unknown file-reading error.";$("gst").textContent="Could not read "+f.name+". "+(f.type.startsWith("image/")?why:("If it is a scanned PDF, use the photo button. "+why));return}}$("gst").textContent="Done. Check the text, then generate."}
 function card(){count++;const d=document.createElement("div");d.className="paper";const a="pf"+count,b="pi"+count;
  d.innerHTML='<div class="row"><input type="text" aria-label="Paper name" value="Paper '+count+'"><label class="btn" for="'+a+'">PDF or text</label><input type="file" id="'+a+'" accept=".pdf,.txt,.md"><label class="btn" for="'+b+'">Photo or screenshot</label><input type="file" id="'+b+'" accept="image/*" multiple><button class="link">Remove</button></div><textarea aria-label="Questions" placeholder="One question per line"></textarea>';
  const ta=d.querySelector("textarea");d.querySelectorAll("input[type=file]").forEach(i=>i.onchange=e=>{ingest([...e.target.files],ta,true);e.target.value=""});d.querySelector(".link").onclick=()=>d.remove();$("papers").appendChild(d)}
