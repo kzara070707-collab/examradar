@@ -180,7 +180,7 @@ function showAuth(user){
  if(user){$("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Loading your study data…";$("authPassword").value=""}
  else{$("authStatus").textContent="Sign in or create an account to continue.";$("authPassword").value=""}
 }
-$("googleSignIn").onclick=async()=>{ $("googleSignIn").disabled=true; $("authStatus").textContent="Connecting to Google…"; try { const {error}=await sbClient.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin}}); if(error) throw error; } catch(e) { $("authStatus").textContent="Google sign-in unavailable: "+(e.message||"Enable Google in Supabase Authentication providers."); $("googleSignIn").disabled=false; } };
+$("googleSignIn").onclick=async()=>{ $("googleSignIn").disabled=true; $("authStatus").textContent="Connecting to Google…"; try { const {error}=await sbClient.auth.signInWithOAuth({provider:"google",options:{redirectTo:"https://examradar-5gf1.vercel.app"}}); if(error) throw error; } catch(e) { $("authStatus").textContent="Google sign-in unavailable: "+(e.message||"Enable Google in Supabase Authentication providers."); $("googleSignIn").disabled=false; } };
 $("magicLink").onclick=async()=>{ const email=$("authEmail").value.trim(); if(!email){$("authStatus").textContent="Enter your email address first.";return} $("magicLink").disabled=true; try { const {error}=await sbClient.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin}}); if(error) throw error; $("authStatus").textContent="Check your email for a secure sign-in link."; } catch(e) { $("authStatus").textContent="Email link failed: "+(e.message||"Check Supabase email settings."); } finally {$("magicLink").disabled=false} };
 $("signUp").onclick=async()=>{
  const email=$("authEmail").value.trim(),password=$("authPassword").value;
@@ -204,7 +204,7 @@ $("signIn").onclick=async()=>{
 $("resetPassword").onclick=async()=>{
  const email=$("authEmail").value.trim();if(!email){$("authStatus").textContent="Enter your email address first.";return}
  $("resetPassword").disabled=true;
- try{const {error}=await sbClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin});if(error)throw error;$("authStatus").textContent="If an account exists for that email, a password reset link has been sent."}
+ try{const {error}=await sbClient.auth.resetPasswordForEmail(email,{redirectTo:"https://examradar-5gf1.vercel.app"});if(error)throw error;$("authStatus").textContent="If an account exists for that email, a password reset link has been sent."}
  catch(e){$("authStatus").textContent="Password reset failed: "+(e.message||"Please try again.")}
  finally{$("resetPassword").disabled=false}
 };
