@@ -162,6 +162,7 @@ async function loadCloud(user){
   }
   lib=localValue("er_lib");notes=localValue("er_notes");
   renderLib();renderNotes();renderProfile();
+  cloudBusy=false;
   await syncAll();
   $("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Cloud sync is on.";
  }catch(e){$("authStatus").textContent="Signed in, but cloud sync failed: "+(e.message||"Unknown error");}
