@@ -98,6 +98,13 @@ button.go:hover{filter:saturate(1.12)}
 <div class="workspace"><aside class="side-folder"><div class="folder-label">YOUR WORKSPACE</div><button class="folder-link" data-p="gen" aria-current="true"><span>✦</span> Generate paper</button><button class="folder-link" data-p="lib" aria-current="false"><span>▤</span> My papers</button><button class="folder-link" data-p="notes" aria-current="false"><span>▧</span> My notes</button><button class="folder-link" data-p="test" aria-current="false"><span>✓</span> Tests</button><button class="folder-link" data-p="quizzes" aria-current="false"><span>⚡</span> Quizzes</button><button class="folder-link" data-p="profile" aria-current="false"><span>☺</span> My profile</button><div class="folder-tip"><b>Small steps add up.</b><p>One focused session at a time.</p></div></aside><div class="workspace-main"><nav aria-label="Workspace shortcuts"><button data-p="gen" aria-current="true">✦ Generate</button><button data-p="lib" aria-current="false">▤ Papers</button><button data-p="notes" aria-current="false">▧ Notes</button><button data-p="test" aria-current="false">✓ Tests</button><button data-p="quizzes" aria-current="false">⚡ Quizzes</button><button data-p="profile" aria-current="false">☺ Profile</button></nav>
 </div></div><p class="pill" id="ai">Checking AI tools...</p></header>
 <main>
+<section id="accountBox">
+<p class="eyebrow">CLOUD SYNC</p><h2>ExamRadar account</h2>
+<p class="hint">Create an account or sign in to sync papers, notes and your profile across devices. Your existing browser data is kept and merged when possible.</p>
+<div class="row"><input id="authEmail" type="text" autocomplete="email" placeholder="Email address" aria-label="Email address"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password (at least 8 characters)" aria-label="Password"></div>
+<div class="row"><button class="go" id="signUp">Create account</button><button id="signIn">Sign in</button><button id="signOut" hidden>Sign out</button><button class="link" id="resetPassword">Forgot password?</button></div>
+<p id="authStatus" class="hint" aria-live="polite">Not signed in. Your data is currently saved on this device.</p>
+</section>
 <div id="p-gen">
 <section><h2>Subject</h2>
 <input type="text" id="subj" list="sl" placeholder="Biology, Chemistry, Physics, Maths..." aria-label="Subject"><datalist id="sl"><option>Biology<option>Chemistry<option>Physics<option>Maths<option>English<option>Computer Science</datalist></section>
@@ -116,15 +123,97 @@ button.go:hover{filter:saturate(1.12)}
 <div id="p-quizzes" hidden><section><p class="eyebrow">QUICK PRACTICE, REAL PROGRESS</p><h2>Quizzes ⚡</h2><p>Turn your generated papers into short practice sessions. Pick a paper from your library to begin a quiz-style test.</p><div class="row"><button class="go" id="quizStart">Choose a paper for a quiz</button><button id="quizGenerate">Generate a paper first</button></div><p class="hint">Your papers stay in My papers. Open one and choose Take test to answer questions and submit your attempt.</p></section><section><h2>Quiz routine</h2><div class="hero-tags"><span>01 · Choose a subject</span><span>02 · Answer without notes</span><span>03 · Review mistakes</span></div></section></div>
 <div id="p-profile" hidden><section><p class="eyebrow">YOUR STUDY IDENTITY</p><h2>My profile ☺</h2><p class="hint">Personalize your workspace. These details are stored only in this browser.</p><label for="profileName">Name or nickname</label><input id="profileName" type="text" placeholder="What should we call you?"><label for="profileLevel" style="display:block;margin-top:12px">Class / study level</label><input id="profileLevel" type="text" placeholder="e.g. Grade 10, FSc Part I"><label for="profileGoal" style="display:block;margin-top:12px">Study goal</label><input id="profileGoal" type="text" placeholder="e.g. Prepare for final exams"><div class="row" style="margin-top:14px"><button class="go" id="saveProfile">Save profile</button><span class="hint" id="profileStatus" aria-live="polite"></span></div></section><section><h2>Your study snapshot</h2><div id="profileStats" class="hero-tags"></div></section></div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+
+const SB_URL="https://lqizczoeyasciuyfiver.supabase.co",SB_KEY="sb_publishable_11qXcm8HQ-QQ-DcvxJfhMA_U4og560-";
+const sbClient=window.supabase.createClient(SB_URL,SB_KEY);
+let cloudUser=null, cloudBusy=false;
+const CLOUD_KEYS=["er_lib","er_notes","er_profile"];
+function localValue(k){try{return JSON.parse(localStorage.getItem(k)||(k==="er_profile"?"{}":"[]"))}catch(e){return k==="er_profile"?{}:[]}}
+function setLocal(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+async function syncCloud(k){
+ if(!cloudUser||cloudBusy)return;
+ const payload=localValue(k);
+ const {error}=await sbClient.from("user_data").upsert({user_id:cloudUser.id,data_key:k,payload,updated_at:new Date().toISOString()},{onConflict:"user_id,data_key"});
+ if(error){$("authStatus").textContent="Cloud sync error: "+error.message;return}
+ $("authStatus").textContent="Signed in as "+cloudUser.email+" · Cloud sync is on.";
+}
+async function syncAll(){for(const k of CLOUD_KEYS)await syncCloud(k)}
+async function loadCloud(user){
+ cloudUser=user;cloudBusy=true;
+ $("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Loading cloud data…";
+ try{
+  const {data,error}=await sbClient.from("user_data").select("data_key,payload").eq("user_id",user.id);
+  if(error)throw error;
+  const remote={};(data||[]).forEach(row=>remote[row.data_key]=row.payload);
+  for(const k of CLOUD_KEYS){
+   const local=localValue(k), cloud=remote[k];
+   if(cloud===undefined)continue;
+   let merged=cloud;
+   if(k==="er_lib"&&Array.isArray(local)&&Array.isArray(cloud)){
+    const byId=new Map();[...local,...cloud].forEach(p=>byId.set(p.id||JSON.stringify(p),p));merged=[...byId.values()];
+   }else if(k==="er_notes"&&Array.isArray(local)&&Array.isArray(cloud)){
+    const byNote=new Map();[...local,...cloud].forEach(n=>byNote.set(JSON.stringify([n.title,n.body,n.date]),n));merged=[...byNote.values()];
+   }else if(k==="er_profile"){merged={...local,...cloud};}
+   setLocal(k,merged);
+  }
+  lib=localValue("er_lib");notes=localValue("er_notes");
+  renderLib();renderNotes();renderProfile();
+  await syncAll();
+  $("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Cloud sync is on.";
+ }catch(e){$("authStatus").textContent="Signed in, but cloud sync failed: "+(e.message||"Unknown error");}
+ finally{cloudBusy=false;}
+}
+function showAuth(user){
+ cloudUser=user||null;
+ $("signUp").hidden=!!user;$("signIn").hidden=!!user;$("signOut").hidden=!user;
+ $("authEmail").hidden=!!user;$("authPassword").hidden=!!user;$("resetPassword").hidden=!!user;
+ if(user) $("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Syncing…";
+}
+$("signUp").onclick=async()=>{
+ const email=$("authEmail").value.trim(),password=$("authPassword").value;
+ if(!email||password.length<8){$("authStatus").textContent="Enter an email and a password with at least 8 characters.";return}
+ $("signUp").disabled=true;
+ const {data,error}=await sbClient.auth.signUp({email,password});
+ $("signUp").disabled=false;
+ if(error){$("authStatus").textContent="Sign-up failed: "+error.message;return}
+ if(data.session&&data.user){showAuth(data.user);await loadCloud(data.user)}
+ else $("authStatus").textContent="Account request submitted. Check your email to confirm the account, then sign in here.";
+};
+$("signIn").onclick=async()=>{
+ const email=$("authEmail").value.trim(),password=$("authPassword").value;
+ if(!email||!password){$("authStatus").textContent="Enter your email and password.";return}
+ $("signIn").disabled=true;
+ const {data,error}=await sbClient.auth.signInWithPassword({email,password});
+ $("signIn").disabled=false;
+ if(error){$("authStatus").textContent="Sign-in failed: "+error.message;return}
+ showAuth(data.user);await loadCloud(data.user);
+};
+$("signOut").onclick=async()=>{
+ const {error}=await sbClient.auth.signOut();
+ if(error){$("authStatus").textContent="Sign-out failed: "+error.message;return}
+ cloudUser=null;showAuth(null);$("authStatus").textContent="Signed out. Your local browser data remains on this device.";
+};
+$("resetPassword").onclick=async()=>{
+ const email=$("authEmail").value.trim();
+ if(!email){$("authStatus").textContent="Enter your email address first.";return}
+ const {error}=await sbClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
+ $("authStatus").textContent=error?"Password reset failed: "+error.message:"If the account exists, a password reset email has been sent.";
+};
+sbClient.auth.onAuthStateChange((event,session)=>{
+ if(session&&session.user){showAuth(session.user);if(!cloudUser||cloudUser.id!==session.user.id)loadCloud(session.user)}
+ else if(event==="SIGNED_OUT"){cloudUser=null;showAuth(null)}
+});
+
 const applyTheme=theme=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem("er_theme",theme)}catch(e){}$("themeToggle").textContent=theme==="dark"?"☀ Light mode":"☾ Dark mode";$("themeToggle").setAttribute("aria-label",theme==="dark"?"Switch to light theme":"Switch to dark theme")};
 let savedTheme="light";try{savedTheme=localStorage.getItem("er_theme")||"light"}catch(e){}applyTheme(savedTheme);
 $("themeToggle").onclick=()=>applyTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let lib=[];try{lib=JSON.parse(localStorage.getItem("er_lib")||"[]")}catch(e){}
-const save=()=>{try{localStorage.setItem("er_lib",JSON.stringify(lib))}catch(e){}};
+const save=()=>{try{localStorage.setItem("er_lib",JSON.stringify(lib))}catch(e){};syncCloud("er_lib")};
 let T=null,count=0;
 const SL={images:true};
 const b64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
@@ -135,10 +224,10 @@ $("ai").textContent=S?"Your PhD teacher is online: photos, model answers and mar
 function show(id){["gen","lib","test","notes","quizzes","profile"].forEach(x=>{if($("p-"+x))$("p-"+x).hidden=x!==id});document.querySelectorAll("[data-p]").forEach(b=>b.setAttribute("aria-current",String(b.dataset.p===id)));if(id==="lib")renderLib();if(id==="notes")renderNotes();if(id==="profile")renderProfile();scrollTo(0,0)}
 document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>show(b.dataset.p));
 let notes=[];try{notes=JSON.parse(localStorage.getItem("er_notes")||"[]")}catch(e){}
-function renderNotes(){const el=$("notesList");if(!notes.length){el.innerHTML='<p class="hint">No notes yet. Add your first note above.</p>';return}el.innerHTML=notes.map((n,i)=>'<article class="note-card"><div class="row"><b>'+esc(n.title||"Untitled note")+'</b><button data-delete-note="'+i+'" aria-label="Delete note">Delete</button></div><p>'+esc(n.body).replace(/\n/g,"<br>")+'</p><p class="hint">'+esc(n.date||"Saved note")+'</p></article>').join("");el.querySelectorAll("[data-delete-note]").forEach(b=>b.onclick=()=>{notes.splice(+b.dataset.deleteNote,1);localStorage.setItem("er_notes",JSON.stringify(notes));renderNotes()})}
-$("saveNote").onclick=()=>{const body=$("noteBody").value.trim(),title=$("noteTitle").value.trim();if(!body&&!title){$("noteStatus").textContent="Add a title or some note text first.";return}notes.unshift({title,body,date:new Date().toLocaleDateString()});localStorage.setItem("er_notes",JSON.stringify(notes));$("noteTitle").value="";$("noteBody").value="";$("noteStatus").textContent="Saved on this device.";renderNotes()};
+function renderNotes(){const el=$("notesList");if(!notes.length){el.innerHTML='<p class="hint">No notes yet. Add your first note above.</p>';return}el.innerHTML=notes.map((n,i)=>'<article class="note-card"><div class="row"><b>'+esc(n.title||"Untitled note")+'</b><button data-delete-note="'+i+'" aria-label="Delete note">Delete</button></div><p>'+esc(n.body).replace(/\n/g,"<br>")+'</p><p class="hint">'+esc(n.date||"Saved note")+'</p></article>').join("");el.querySelectorAll("[data-delete-note]").forEach(b=>b.onclick=()=>{notes.splice(+b.dataset.deleteNote,1);localStorage.setItem("er_notes",JSON.stringify(notes));syncCloud("er_notes");renderNotes()})}
+$("saveNote").onclick=()=>{const body=$("noteBody").value.trim(),title=$("noteTitle").value.trim();if(!body&&!title){$("noteStatus").textContent="Add a title or some note text first.";return}notes.unshift({title,body,date:new Date().toLocaleDateString()});localStorage.setItem("er_notes",JSON.stringify(notes));syncCloud("er_notes");$("noteTitle").value="";$("noteBody").value="";$("noteStatus").textContent="Saved on this device.";renderNotes()};
 function renderProfile(){let p={};try{p=JSON.parse(localStorage.getItem("er_profile")||"{}")}catch(e){}$("profileName").value=p.name||"";$("profileLevel").value=p.level||"";$("profileGoal").value=p.goal||"";$("profileStats").innerHTML='<span>📚 '+lib.length+' saved papers</span><span>📝 '+notes.length+' saved notes</span><span>🎯 Keep your streak going</span>'}
-$("saveProfile").onclick=()=>{localStorage.setItem("er_profile",JSON.stringify({name:$("profileName").value.trim(),level:$("profileLevel").value.trim(),goal:$("profileGoal").value.trim()}));$("profileStatus").textContent="Profile saved on this device.";renderProfile()};
+$("saveProfile").onclick=()=>{localStorage.setItem("er_profile",JSON.stringify({name:$("profileName").value.trim(),level:$("profileLevel").value.trim(),goal:$("profileGoal").value.trim()}));syncCloud("er_profile");$("profileStatus").textContent="Profile saved on this device.";renderProfile()};
 $("quizStart").onclick=()=>show("lib");$("quizGenerate").onclick=()=>show("gen");
 
 const SW=new Set("the and for are with that this from what which when where why how who whom whose into their there these those have has had was were been being you your can could would should will shall may might also than then them they its not but all any each other such only own same some more most very out our about over under between through during before after above below again further once here both few does did doing off too use using used give state explain describe define write discuss answer question marks mark following briefly detail long short".split(" "));
