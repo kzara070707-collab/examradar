@@ -48,10 +48,41 @@ header .topline{display:flex;align-items:center;justify-content:space-between;ga
 #ai{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
 #ai::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
 @media(max-width:600px){header,main{padding-left:14px;padding-right:14px}section,.pc{padding:16px;border-radius:14px}nav{width:100%}nav button{flex:1;padding:9px 8px}}
+:root{--bg:#f5f3ff;--card:#ffffff;--ink:#21153e;--mut:#766b91;--line:#e6e0f4;--hl:#f5d0fe;--acc:#7654e8;--acc2:#ec63b7;--onacc:#fff;color-scheme:light}
+:root[data-theme="dark"]{--bg:#100c20;--card:#1b1530;--ink:#f7f3ff;--mut:#b6accd;--line:#33284d;--hl:#57335e;--acc:#a995ff;--acc2:#ff83c8;--onacc:#1b1030;color-scheme:dark}
+body{background:radial-gradient(ellipse at 10% 0%,rgba(190,169,255,.25),transparent 35%),var(--bg)}
+body::before{height:4px}
+header{padding-top:24px}
+.hero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:26px;padding:24px 28px 28px;background:linear-gradient(135deg,rgba(126,94,234,.12),rgba(236,99,183,.08)),var(--card);box-shadow:0 18px 55px rgba(44,25,84,.08)}
+.hero:after{content:"✦";position:absolute;right:7%;top:22%;font-size:clamp(5rem,13vw,9rem);line-height:1;color:var(--acc);opacity:.09;pointer-events:none}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:linear-gradient(140deg,var(--acc),var(--acc2));color:white;font-size:1rem;font-weight:800;box-shadow:0 8px 22px rgba(118,84,232,.25)}
+.brand h1{display:flex;align-items:baseline;gap:0;font-size:1.65rem;margin:0;letter-spacing:-.05em}
+.brand-name{color:var(--acc)}
+.brand h1 small{font-size:.58rem;letter-spacing:.15em;color:var(--mut);margin-left:9px;font-weight:800}
+#themeToggle{position:relative;z-index:1;border-radius:999px;background:var(--card)}
+.hero-copy{max-width:680px;padding:34px 0 4px;position:relative;z-index:1}
+.eyebrow{font-size:.72rem;letter-spacing:.16em;font-weight:800;color:var(--acc);margin:0 0 12px}
+.hero-copy h2{font-size:clamp(2.15rem,6vw,3.8rem);line-height:1.04;letter-spacing:-.055em;font-weight:800;margin:0 0 14px}
+.hero-copy h2 span{background:linear-gradient(100deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{font-size:1.05rem;color:var(--mut);max-width:520px;margin:0 0 18px}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap}
+.hero-tags span{font-size:.8rem;font-weight:700;border:1px solid var(--line);border-radius:999px;padding:7px 11px;background:var(--card);color:var(--mut)}
+nav{width:100%;margin:16px 0 10px;padding:7px;border-radius:16px;box-shadow:0 7px 25px rgba(44,25,84,.05)}
+nav button{padding:11px 18px}
+main{padding-bottom:80px}
+section,.pc{border-radius:20px;box-shadow:0 10px 32px rgba(44,25,84,.045)}
+section h2{font-size:1.25rem;letter-spacing:-.02em}
+button.go{background:linear-gradient(115deg,var(--acc),var(--acc2));box-shadow:0 8px 22px rgba(118,84,232,.22)}
+button.go:hover{filter:saturate(1.12)}
+.paper{border-style:solid;background:var(--bg);border-radius:13px;padding:14px}
+.q{padding:15px 0}
+.note{border-left-color:var(--acc);background:linear-gradient(90deg,rgba(118,84,232,.08),transparent);border-radius:0 10px 10px 0}
+@media(max-width:600px){.hero{padding:18px 16px 22px;border-radius:20px}.brand-mark{width:39px;height:39px;border-radius:12px}.brand h1{font-size:1.35rem}.brand h1 small{display:none}.hero-copy{padding-top:28px}.hero-copy h2{font-size:2.45rem}.hero-sub{font-size:.95rem}.hero-tags span{font-size:.72rem;padding:6px 8px}#themeToggle{font-size:.8rem;padding:8px 10px}}
 </style></head><body>
-<header><div class="topline"><h1>Exam<mark>Radar</mark> Studio</h1><button id="themeToggle" type="button" aria-label="Switch color theme">☾ Dark mode</button></div>
-<nav><button data-p="gen" aria-current="true">Generate</button><button data-p="lib" aria-current="false">My papers</button><button data-p="test" aria-current="false">Test</button></nav>
-<p class="pill" id="ai">Checking your teacher...</p></header>
+<header><div class="hero"><div class="topline"><div class="brand"><div class="brand-mark">ER</div><h1>Exam<span class="brand-name">Radar</span><small>STUDY STUDIO</small></h1></div><button id="themeToggle" type="button" aria-label="Switch color theme">☾ Dark mode</button></div><div class="hero-copy"><p class="eyebrow">YOUR PERSONAL EXAM COMMAND CENTRE</p><h2>Study smarter.<br><span>Walk in prepared.</span></h2><p class="hero-sub">Turn past papers into focused practice, build confidence, and track what you know.</p><div class="hero-tags"><span>✦ Smart practice</span><span>↗ Past-paper patterns</span><span>✓ Track progress</span></div></div></div>
+<nav><button data-p="gen" aria-current="true">✦ Generate</button><button data-p="lib" aria-current="false">▤ My papers</button><button data-p="test" aria-current="false">◎ Test yourself</button></nav>
+<p class="pill" id="ai">Checking AI tools...</p></header>
 <main>
 <div id="p-gen">
 <section><h2>Subject</h2>
