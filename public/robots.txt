@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://examradar-5gf1.vercel.app/sitemap.xml
