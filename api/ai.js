@@ -1,6 +1,7 @@
 // Vercel serverless function using Google's Gemini API.
 // The API key stays on the server and is never sent to the browser.
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.8-flash-lite";
 const LIMIT = Number(process.env.HOURLY_LIMIT || 20);
 const hits = new Map();
 
@@ -28,18 +29,35 @@ module.exports = async function handler(req, res) {
   }
   parts.push({ text: prompt });
 
-  try {
-    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(MODEL) + ":generateContent", {
+  async function askModel(model) {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
       method: "POST",
       headers: { "x-goog-api-key": key, "content-type": "application/json" },
       body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { maxOutputTokens: 6000 } })
     });
-    const j = await r.json().catch(() => ({}));
+    const data = await response.json().catch(() => ({}));
+    return { response, data, model };
+  }
+
+  try {
+    let result = await askModel(MODEL);
+    // Retry temporary overload once, then try the fallback model.
+    if (result.response.status === 503) {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      result = await askModel(MODEL);
+      if (result.response.status === 503 && FALLBACK_MODEL !== MODEL) {
+        console.warn("Primary Gemini model overloaded; trying fallback model.");
+        result = await askModel(FALLBACK_MODEL);
+      }
+    }
+
+    const { response: r, data: j, model } = result;
     if (!r.ok) {
-      console.error("Gemini request failed", r.status, JSON.stringify(j).slice(0, 700));
-      if (r.status === 400 || r.status === 404) return res.status(502).json({ error: "Gemini rejected the model or request. Check GEMINI_MODEL in Vercel, or remove it to use the default model." });
+      console.error("Gemini request failed", r.status, "model=" + model, JSON.stringify(j).slice(0, 500));
+      if (r.status === 400 || r.status === 404) return res.status(502).json({ error: "Gemini rejected model " + model + ". Check GEMINI_MODEL and GEMINI_FALLBACK_MODEL in Vercel." });
       if (r.status === 401 || r.status === 403) return res.status(502).json({ error: "Gemini rejected the API key or its permissions. Check the key in Google AI Studio and Vercel." });
-      if (r.status === 429) return res.status(429).json({ error: "Gemini rate limit or quota reached. Wait and try again, or check your Google AI Studio quota." });
+      if (r.status === 429) return res.status(429).json({ error: "Gemini rate limit or quota reached. Check your Google AI Studio quota." });
+      if (r.status === 503) return res.status(503).json({ error: "Gemini is temporarily overloaded on both configured models. Wait a little and retry; your answers remain saved." });
       return res.status(502).json({ error: "Gemini could not complete the request (HTTP " + r.status + ")." });
     }
     const text = ((j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || []).map(p => p.text || "").join("\n").trim();
