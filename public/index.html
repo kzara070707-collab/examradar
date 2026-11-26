@@ -93,18 +93,24 @@ button.go:hover{filter:saturate(1.12)}
 #p-profile label{font-weight:700;font-size:.9rem}
 @media(max-width:760px){.workspace{grid-template-columns:1fr}.side-folder{position:static;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:9px}.folder-label,.folder-tip{display:none}.folder-link{justify-content:center;flex-direction:column;gap:5px;text-align:center;padding:8px 4px;font-size:.76rem}.folder-link span{width:29px;height:27px}.workspace-main nav{display:none}}
 @media(max-width:600px){.hero{padding:18px 16px 22px;border-radius:20px}.brand-mark{width:39px;height:39px;border-radius:12px}.brand h1{font-size:1.35rem}.brand h1 small{display:none}.hero-copy{padding-top:28px}.hero-copy h2{font-size:2.45rem}.hero-sub{font-size:.95rem}.hero-tags span{font-size:.72rem;padding:6px 8px}#themeToggle{font-size:.8rem;padding:8px 10px}}
-</style></head><body>
+#authScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px;background:radial-gradient(ellipse at 15% 10%,rgba(126,94,234,.22),transparent 40%),radial-gradient(ellipse at 90% 85%,rgba(236,99,183,.15),transparent 38%),var(--bg)}.auth-card{width:min(100%,460px);padding:clamp(22px,5vw,38px);border:1px solid var(--line);border-radius:26px;background:var(--card);box-shadow:0 24px 80px rgba(44,25,84,.13)}.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:34px}.auth-wordmark{font-size:1.55rem;font-weight:800;letter-spacing:-.05em;line-height:1.2}.auth-wordmark span{color:var(--acc)}.auth-kicker{font-size:.62rem;letter-spacing:.12em;font-weight:800;color:var(--mut);margin-top:3px}.auth-card h1{font-size:clamp(1.8rem,6vw,2.3rem);margin:4px 0 10px;letter-spacing:-.04em}.auth-description{line-height:1.6;margin-bottom:24px}.auth-card label{display:block;font-size:.9rem;font-weight:700;margin:14px 0 6px}.auth-card input{display:block;width:100%;min-width:0;height:48px;padding:12px 14px;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px}.auth-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}.auth-actions button{min-width:0;min-height:48px;padding:10px 8px}.auth-reset{display:block;margin:12px auto 0}.auth-status{min-height:24px;margin:18px 0 0;overflow-wrap:anywhere}.auth-footer{color:var(--mut);font-size:.85rem;margin:18px 0 0;text-align:center}#appShell[hidden],#authScreen[hidden]{display:none!important}@media(max-width:420px){.auth-actions{grid-template-columns:1fr}.auth-card{border-radius:20px}.auth-brand{margin-bottom:26px}}</style></head><body><div id="authScreen">
+ <div class="auth-card">
+  <div class="auth-brand"><div class="brand-mark">ER</div><div><div class="auth-wordmark">Exam<span>Radar</span></div><div class="auth-kicker">YOUR PERSONAL EXAM COMMAND CENTRE</div></div></div>
+  <p class="eyebrow">YOUR STUDY SPACE, SECURED</p><h1>Welcome to ExamRadar</h1>
+  <p class="hint auth-description">Sign in to access your papers, notes and study progress from any device.</p>
+  <label for="authEmail">Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com" aria-label="Email address">
+  <label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 8 characters" aria-label="Password">
+  <div class="auth-actions"><button class="go" id="signIn">Sign in</button><button id="signUp">Create account</button></div>
+  <button class="link auth-reset" id="resetPassword">Forgot password?</button>
+  <p id="authStatus" class="hint auth-status" aria-live="polite">Checking your session…</p>
+ </div><p class="auth-footer">Study smarter. Walk in prepared.</p>
+</div><div id="appShell" hidden>
+
 <header><div class="hero"><div class="topline"><div class="brand"><div class="brand-mark">ER</div><h1>Exam<span class="brand-name">Radar</span><small>STUDY STUDIO</small></h1></div><button id="themeToggle" type="button" aria-label="Switch color theme">☾ Dark mode</button></div><div class="hero-copy"><p class="eyebrow">YOUR PERSONAL EXAM COMMAND CENTRE</p><h2>Study smarter.<br><span>Walk in prepared.</span></h2><p class="hero-sub">Turn past papers into focused practice, build confidence, and track what you know.</p><div class="hero-tags"><span>✦ Smart practice</span><span>↗ Past-paper patterns</span><span>✓ Track progress</span></div></div></div>
 <div class="workspace"><aside class="side-folder"><div class="folder-label">YOUR WORKSPACE</div><button class="folder-link" data-p="gen" aria-current="true"><span>✦</span> Generate paper</button><button class="folder-link" data-p="lib" aria-current="false"><span>▤</span> My papers</button><button class="folder-link" data-p="notes" aria-current="false"><span>▧</span> My notes</button><button class="folder-link" data-p="test" aria-current="false"><span>✓</span> Tests</button><button class="folder-link" data-p="quizzes" aria-current="false"><span>⚡</span> Quizzes</button><button class="folder-link" data-p="profile" aria-current="false"><span>☺</span> My profile</button><div class="folder-tip"><b>Small steps add up.</b><p>One focused session at a time.</p></div></aside><div class="workspace-main"><nav aria-label="Workspace shortcuts"><button data-p="gen" aria-current="true">✦ Generate</button><button data-p="lib" aria-current="false">▤ Papers</button><button data-p="notes" aria-current="false">▧ Notes</button><button data-p="test" aria-current="false">✓ Tests</button><button data-p="quizzes" aria-current="false">⚡ Quizzes</button><button data-p="profile" aria-current="false">☺ Profile</button></nav>
 </div></div><p class="pill" id="ai">Checking AI tools...</p></header>
 <main>
-<section id="accountBox">
-<p class="eyebrow">CLOUD SYNC</p><h2>ExamRadar account</h2>
-<p class="hint">Create an account or sign in to sync papers, notes and your profile across devices. Your existing browser data is kept and merged when possible.</p>
-<div class="row"><input id="authEmail" type="text" autocomplete="email" placeholder="Email address" aria-label="Email address"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Password (at least 8 characters)" aria-label="Password"></div>
-<div class="row"><button class="go" id="signUp">Create account</button><button id="signIn">Sign in</button><button id="signOut" hidden>Sign out</button><button class="link" id="resetPassword">Forgot password?</button></div>
-<p id="authStatus" class="hint" aria-live="polite">Not signed in. Your data is currently saved on this device.</p>
-</section>
+
 <div id="p-gen">
 <section><h2>Subject</h2>
 <input type="text" id="subj" list="sl" placeholder="Biology, Chemistry, Physics, Maths..." aria-label="Subject"><datalist id="sl"><option>Biology<option>Chemistry<option>Physics<option>Maths<option>English<option>Computer Science</datalist></section>
@@ -123,6 +129,7 @@ button.go:hover{filter:saturate(1.12)}
 <div id="p-quizzes" hidden><section><p class="eyebrow">QUICK PRACTICE, REAL PROGRESS</p><h2>Quizzes ⚡</h2><p>Turn your generated papers into short practice sessions. Pick a paper from your library to begin a quiz-style test.</p><div class="row"><button class="go" id="quizStart">Choose a paper for a quiz</button><button id="quizGenerate">Generate a paper first</button></div><p class="hint">Your papers stay in My papers. Open one and choose Take test to answer questions and submit your attempt.</p></section><section><h2>Quiz routine</h2><div class="hero-tags"><span>01 · Choose a subject</span><span>02 · Answer without notes</span><span>03 · Review mistakes</span></div></section></div>
 <div id="p-profile" hidden><section><p class="eyebrow">YOUR STUDY IDENTITY</p><h2>My profile ☺</h2><p class="hint">Personalize your workspace. These details are stored only in this browser.</p><label for="profileName">Name or nickname</label><input id="profileName" type="text" placeholder="What should we call you?"><label for="profileLevel" style="display:block;margin-top:12px">Class / study level</label><input id="profileLevel" type="text" placeholder="e.g. Grade 10, FSc Part I"><label for="profileGoal" style="display:block;margin-top:12px">Study goal</label><input id="profileGoal" type="text" placeholder="e.g. Prepare for final exams"><div class="row" style="margin-top:14px"><button class="go" id="saveProfile">Save profile</button><span class="hint" id="profileStatus" aria-live="polite"></span></div></section><section><h2>Your study snapshot</h2><div id="profileStats" class="hero-tags"></div></section></div>
 </main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
@@ -170,45 +177,40 @@ async function loadCloud(user){
 }
 function showAuth(user){
  cloudUser=user||null;
- $("signUp").hidden=!!user;$("signIn").hidden=!!user;$("signOut").hidden=!user;
- $("authEmail").hidden=!!user;$("authPassword").hidden=!!user;$("resetPassword").hidden=!!user;
- if(user) $("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Syncing…";
+ $("authScreen").hidden=!!user;$("appShell").hidden=!user;
+ if(user){$("authStatus").textContent="Signed in as "+(user.email||"your account")+" · Loading your study data…";$("authPassword").value=""}
+ else{$("authStatus").textContent="Sign in or create an account to continue.";$("authPassword").value=""}
 }
 $("signUp").onclick=async()=>{
  const email=$("authEmail").value.trim(),password=$("authPassword").value;
- if(!email||password.length<8){$("authStatus").textContent="Enter an email and a password with at least 8 characters.";return}
- $("signUp").disabled=true;
- const {data,error}=await sbClient.auth.signUp({email,password});
- $("signUp").disabled=false;
- if(error){$("authStatus").textContent="Sign-up failed: "+error.message;return}
- if(data.session&&data.user){showAuth(data.user);await loadCloud(data.user)}
- else $("authStatus").textContent="Account request submitted. Check your email to confirm the account, then sign in here.";
+ if(!email||!/^\\S+@\\S+\\.\\S+$/.test(email)){$("authStatus").textContent="Enter a valid email address.";return}
+ if(password.length<8){$("authStatus").textContent="Use a password with at least 8 characters.";return}
+ $("signUp").disabled=true;$("signIn").disabled=true;
+ try{const {data,error}=await sbClient.auth.signUp({email,password});if(error)throw error;
+  if(data.session&&data.user){showAuth(data.user);await loadCloud(data.user)}
+  else $("authStatus").textContent="Account created. Check your email for a confirmation link, then sign in here.";
+ }catch(e){$("authStatus").textContent="Sign-up failed: "+(e.message||"Please try again.")}
+ finally{$("signUp").disabled=false;$("signIn").disabled=false}
 };
 $("signIn").onclick=async()=>{
  const email=$("authEmail").value.trim(),password=$("authPassword").value;
  if(!email||!password){$("authStatus").textContent="Enter your email and password.";return}
- $("signIn").disabled=true;
- const {data,error}=await sbClient.auth.signInWithPassword({email,password});
- $("signIn").disabled=false;
- if(error){$("authStatus").textContent="Sign-in failed: "+error.message;return}
- showAuth(data.user);await loadCloud(data.user);
-};
-$("signOut").onclick=async()=>{
- const {error}=await sbClient.auth.signOut();
- if(error){$("authStatus").textContent="Sign-out failed: "+error.message;return}
- cloudUser=null;showAuth(null);$("authStatus").textContent="Signed out. Your local browser data remains on this device.";
+ $("signIn").disabled=true;$("signUp").disabled=true;
+ try{const {data,error}=await sbClient.auth.signInWithPassword({email,password});if(error)throw error;showAuth(data.user);await loadCloud(data.user)}
+ catch(e){$("authStatus").textContent="Sign-in failed: "+(e.message||"Please try again.")}
+ finally{$("signIn").disabled=false;$("signUp").disabled=false}
 };
 $("resetPassword").onclick=async()=>{
- const email=$("authEmail").value.trim();
- if(!email){$("authStatus").textContent="Enter your email address first.";return}
- const {error}=await sbClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin});
- $("authStatus").textContent=error?"Password reset failed: "+error.message:"If the account exists, a password reset email has been sent.";
+ const email=$("authEmail").value.trim();if(!email){$("authStatus").textContent="Enter your email address first.";return}
+ $("resetPassword").disabled=true;
+ try{const {error}=await sbClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin});if(error)throw error;$("authStatus").textContent="If an account exists for that email, a password reset link has been sent."}
+ catch(e){$("authStatus").textContent="Password reset failed: "+(e.message||"Please try again.")}
+ finally{$("resetPassword").disabled=false}
 };
 sbClient.auth.onAuthStateChange((event,session)=>{
- if(session&&session.user){showAuth(session.user);if(!cloudUser||cloudUser.id!==session.user.id)loadCloud(session.user)}
+ if(session&&session.user){const changed=!cloudUser||cloudUser.id!==session.user.id;showAuth(session.user);if(changed)setTimeout(()=>loadCloud(session.user),0)}
  else if(event==="SIGNED_OUT"){cloudUser=null;showAuth(null)}
 });
-
 const applyTheme=theme=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem("er_theme",theme)}catch(e){}$("themeToggle").textContent=theme==="dark"?"☀ Light mode":"☾ Dark mode";$("themeToggle").setAttribute("aria-label",theme==="dark"?"Switch to light theme":"Switch to dark theme")};
 let savedTheme="light";try{savedTheme=localStorage.getItem("er_theme")||"light"}catch(e){}applyTheme(savedTheme);
 $("themeToggle").onclick=()=>applyTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
