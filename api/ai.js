@@ -1,7 +1,7 @@
 // Vercel serverless function using Google's Gemini API.
 // The API key stays on the server and is never sent to the browser.
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.8-flash-lite";
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.8-flash";
 const LIMIT = Number(process.env.HOURLY_LIMIT || 20);
 const hits = new Map();
 
@@ -30,25 +30,30 @@ module.exports = async function handler(req, res) {
   parts.push({ text: prompt });
 
   async function askModel(model) {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
-      method: "POST",
-      headers: { "x-goog-api-key": key, "content-type": "application/json" },
-      body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { maxOutputTokens: 6000 } })
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    let response;
+    try {
+      response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
+        method: "POST",
+        headers: { "x-goog-api-key": key, "content-type": "application/json" },
+        body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig: { maxOutputTokens: 6000 } }),
+        signal: controller.signal
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     const data = await response.json().catch(() => ({}));
     return { response, data, model };
   }
 
   try {
     let result = await askModel(MODEL);
-    // Retry temporary overload once, then try the fallback model.
-    if (result.response.status === 503) {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      result = await askModel(MODEL);
-      if (result.response.status === 503 && FALLBACK_MODEL !== MODEL) {
-        console.warn("Primary Gemini model overloaded; trying fallback model.");
-        result = await askModel(FALLBACK_MODEL);
-      }
+    // Switch models immediately for overload or an unavailable model ID; avoid
+    // retry loops that can exceed Vercel's function timeout.
+    if ([404, 503].includes(result.response.status) && FALLBACK_MODEL !== MODEL) {
+      console.warn("Primary Gemini model unavailable; trying fallback model.");
+      result = await askModel(FALLBACK_MODEL);
     }
 
     const { response: r, data: j, model } = result;
@@ -64,7 +69,8 @@ module.exports = async function handler(req, res) {
     if (!text) return res.status(502).json({ error: "Gemini returned no answer. Try again." });
     return res.status(200).json({ text });
   } catch (e) {
-    console.error("Gemini fetch failed", e && e.message ? e.message : "unknown error");
-    return res.status(502).json({ error: "Could not reach the Gemini service." });
+    const timedOut = e && e.name === "AbortError";
+    console.error("Gemini fetch failed", timedOut ? "request timed out" : (e && e.message ? e.message : "unknown error"));
+    return res.status(timedOut ? 504 : 502).json({ error: timedOut ? "The AI service took too long to respond. Please try again shortly." : "Could not reach the Gemini service." });
   }
 };
