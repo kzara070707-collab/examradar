@@ -10,26 +10,26 @@
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
-header,main{max-width:860px;margin:0 auto;padding:0 18px}
-header{padding-top:22px}
+header,main{max-width:1080px;margin:0 auto;padding:0 22px}
+header{padding-top:28px;padding-bottom:8px}
 h1{font-size:clamp(1.8rem,5vw,2.6rem);line-height:1.05;margin:0 0 6px;font-weight:800;letter-spacing:-.02em}
 h1 mark{background:linear-gradient(transparent 55%,var(--hl) 55%);color:inherit}
 h2{font-size:1.2rem;margin:18px 0 6px;font-weight:600}
-nav{display:flex;gap:6px;margin:12px 0 6px;border-bottom:1px solid var(--line)}
-nav button{border:none;background:none;border-bottom:3px solid transparent;border-radius:0;padding:10px 14px;color:var(--mut)}
-nav button[aria-current="true"]{color:var(--ink);border-bottom-color:var(--acc)}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 8px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;width:fit-content;max-width:100%}
+nav button{border:1px solid transparent;background:transparent;border-radius:10px;padding:10px 16px;color:var(--mut)}
+nav button[aria-current="true"]{color:var(--onacc);background:linear-gradient(135deg,var(--acc),var(--acc2));border-color:transparent;font-weight:800}
 .pill{font-size:.85rem;color:var(--mut);margin:6px 0 0}
 main{padding-bottom:64px}
-section,.pc{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
+section,.pc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 8px 28px rgba(38,18,75,.055)}
 .hint{color:var(--mut);font-size:.9rem;margin:0 0 10px}
-textarea,input[type=text],input[type=number]{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px}
-textarea{min-height:100px;resize:vertical}
+textarea,input[type=text],input[type=number]{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+textarea{min-height:120px;resize:vertical}
 :focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 .paper{border:1px dashed var(--line);border-radius:8px;padding:12px;margin-bottom:12px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
 .row input[type=text]{flex:1 1 150px;width:auto}
-button,label.btn{font:inherit;font-weight:600;border-radius:6px;padding:9px 14px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
-button.go{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onacc);border-color:transparent;padding:11px 20px}
+button,label.btn{font:inherit;font-weight:700;border-radius:10px;padding:10px 15px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);transition:transform .15s ease,border-color .15s ease}button:hover,label.btn:hover{border-color:var(--acc);transform:translateY(-1px)}
+button.go{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onacc);border-color:transparent;padding:12px 20px;box-shadow:0 7px 18px rgba(124,58,237,.18)}
 button:disabled{opacity:.5;cursor:default}
 button.link{border:none;background:none;color:var(--mut);text-decoration:underline;padding:4px 6px}
 input[type=file]{display:none}
@@ -41,10 +41,15 @@ details{margin-top:6px}summary{cursor:pointer;color:var(--acc)}
 .ok{color:var(--ok)}.bad{color:var(--bad)}
 .note{border-left:4px solid var(--hl);padding:8px 12px;color:var(--mut);font-size:.9rem}
 [hidden]{display:none!important}
-body::before{content:"";display:block;height:6px;background:linear-gradient(90deg,var(--acc),var(--acc2))}
-section{border-top:3px solid var(--acc)}
+body::before{content:"";display:block;height:5px;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+section{border-top:1px solid var(--line)}
+header .topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#themeToggle{white-space:nowrap;border-radius:999px;padding:8px 13px}
+#ai{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+#ai::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+@media(max-width:600px){header,main{padding-left:14px;padding-right:14px}section,.pc{padding:16px;border-radius:14px}nav{width:100%}nav button{flex:1;padding:9px 8px}}
 </style></head><body>
-<header><h1>Exam<mark>Radar</mark> Studio</h1>
+<header><div class="topline"><h1>Exam<mark>Radar</mark> Studio</h1><button id="themeToggle" type="button" aria-label="Switch color theme">☾ Dark mode</button></div>
 <nav><button data-p="gen" aria-current="true">Generate</button><button data-p="lib" aria-current="false">My papers</button><button data-p="test" aria-current="false">Test</button></nav>
 <p class="pill" id="ai">Checking your teacher...</p></header>
 <main>
@@ -66,6 +71,9 @@ section{border-top:3px solid var(--acc)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+const applyTheme=theme=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem("er_theme",theme)}catch(e){}$("themeToggle").textContent=theme==="dark"?"☀ Light mode":"☾ Dark mode";$("themeToggle").setAttribute("aria-label",theme==="dark"?"Switch to light theme":"Switch to dark theme")};
+let savedTheme="light";try{savedTheme=localStorage.getItem("er_theme")||"light"}catch(e){}applyTheme(savedTheme);
+$("themeToggle").onclick=()=>applyTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let lib=[];try{lib=JSON.parse(localStorage.getItem("er_lib")||"[]")}catch(e){}
 const save=()=>{try{localStorage.setItem("er_lib",JSON.stringify(lib))}catch(e){}};
